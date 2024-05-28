@@ -26,12 +26,8 @@ class FileStorage:
 
     def all(self, cls=None):
         """returns the dictionary __objects"""
-        if cls is not None:
-            new_dict = {}
-            for key, value in self.__objects.items():
-                if cls == value.__class__ or cls == value.__class__.__name__:
-                    new_dict[key] = value
-            return new_dict
+        if cls:
+            return {key: obj for key, obj in self.__objects.items() if isinstance(obj, cls)}
         return self.__objects
 
     def new(self, obj):
@@ -52,11 +48,15 @@ class FileStorage:
         """deserializes the JSON file to __objects"""
         try:
             with open(self.__file_path, 'r') as f:
-                jo = json.load(f)
-            for key in jo:
-                self.__objects[key] = classes[jo[key]["__class__"]](**jo[key])
-        except:
+                json_objects = json.load(f)
+            for key, val in json_objects.items():
+                cls_name = val["__class__"]
+                cls = classes[cls_name]
+                self.__objects[key] = cls(**val)
+        except FileNotFoundError:
             pass
+        except Exception as e:
+            print("Error loading from JSON:", e)
 
     def delete(self, obj=None):
         """delete obj from __objects if it’s inside"""
@@ -74,10 +74,8 @@ class FileStorage:
         Returns the object based on the class name and its ID, or None if not
         found
         """
-        key = "{}.{}".format(cls, id)
-        if key in self.__objects.keys():
-            return self.__objects[key]
-        return None
+        key = "{}.{}".format(cls.__name__, id)
+        return self.__objects.get(key)
 
     def count(self, cls=None):
         """
@@ -85,9 +83,5 @@ class FileStorage:
         If no name is passed, returns the count of all objects in storage.
         """
         if cls:
-            counter = 0
-            for obj in self.__objects.values():
-                if obj.__class__.__name__ == cls:
-                    counter += 1
-            return counter
+            return sum(1 for obj in self.__objects.values() if obj.__class__.__name__ == cls)
         return len(self.__objects)

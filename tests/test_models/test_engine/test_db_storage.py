@@ -78,23 +78,40 @@ class TestFileStorage(unittest.TestCase):
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_all_no_class(self):
         """Test that all returns all rows when no class is passed"""
+        all_objs = models.storage.all()
+        self.assertEqual(len(all_objs), models.storage.count())
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_new(self):
         """test that new adds an object to the database"""
+        initial_count = models.storage.count()
+        user = User(name="Test User")
+        models.storage.new(user)
+        models.storage.save()
+        self.assertEqual(models.storage.count(), initial_count + 1)
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_save(self):
         """Test that save properly saves objects to file.json"""
+        initial_count = models.storage.count()
+        user = User(name="Test User")
+        models.storage.new(user)
+        models.storage.save()
+        self.assertEqual(models.storage.count(), initial_count + 1)
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_get(self):
         """Test that get properly returns a requested object"""
-        user = User(name="User1")
-        user.save()
-        self.assertEqual(models.storage.get("User", user.id), user)
+        user = User(name="Test User")
+        models.storage.new(user)
+        models.storage.save()
+        self.assertEqual(models.storage.get(User, user.id), user)
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_count(self):
         """Test that count properly counts all objects"""
-        self.assertEqual(len(models.storage.all()), models.storage.count())
+        initial_count = models.storage.count()
+        user = User(name="Test User")
+        models.storage.new(user)
+        models.storage.save()
+        self.assertEqual(models.storage.count(), initial_count + 1)
